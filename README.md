@@ -40,7 +40,7 @@ Testler:
 
 | Aşama | Durum |
 |---|---|
-| 0 Kurulum | ✅ (torch hariç) |
+| 0 Kurulum | ✅ |
 | 1 Ortam `env/grid_env.py` | ✅ |
 | 2 BFS oracle `baselines/` | ✅ |
 | 3 Tek ajan DQN | 🔲 |

@@ -305,21 +305,15 @@ mixer:    (Q_1, Q_2), state → Q_tot
 
 Her aşamanın kabul kriteri var. **Kriter geçmeden sonrakine geçme.**
 
-### ✅ Aşama 0 — Kurulum (torch hariç TAMAM)
+### ✅ Aşama 0 — Kurulum — TAMAM
 
-```bash
-.venv\Scripts\python.exe -m pip install torch
-```
-
-- [x] venv kuruldu (`numpy 2.5.1`, `matplotlib 3.11.1`)
-- [ ] **torch kurulumu bekliyor** — Aşama 3'ten itibaren gerekli.
-      `torch-2.13.0-cp314-cp314-win_amd64.whl` mevcut olduğu doğrulandı ✅
+- [x] venv: `numpy 2.5.1`, `matplotlib 3.11.1`, **`torch 2.13.0+cpu`**
+      (`cp314` wheel'i sorunsuz kuruldu, `cuda=False` — CPU yeterli)
 - [x] Klasör iskeleti (Bölüm 6)
 - [x] `.gitignore` (`.venv/`, `__pycache__/`, `runs/`)
 - [x] `config.py` — tüm hiperparametreler tek dosyada
-- [ ] `git init`
-
-> Torch indirmesi ~250 MB, sabırlı ol. GPU sürümüne gerek yok, CPU wheel yeter.
+- [x] `git init` + ilk commit + push →
+      [gulergokhan/MARL_PATHFINDING](https://github.com/gulergokhan/MARL_PATHFINDING)
 
 ---
 
