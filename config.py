@@ -69,6 +69,21 @@ DQN_EVAL_EVERY = 2_000         # episode
 # Curriculum (PLAN §Asama 6): zor konfig orani 0.2 -> 0.8
 P_HARD_START, P_HARD_END, P_HARD_CAP = 0.20, 0.80, 0.80
 
+# ---------------------------------------------------------------- IQL (Asama 4)
+# Iki bagimsiz DQN (Asama 3'teki DQNAgent, degistirilmeden). Ortak odul YOK --
+# her ajan info["r_ind"][agent]'i alir (grid_env.py'de zaten sadece step-cost +
+# kendi hedef bonusu iceriyor; kilitleme/takim/optimallik cezalari r_team'e
+# ait, r_ind'e hic eklenmiyor). Episode basina iki faz oldugu icin Asama 3'e
+# gore hem daha az episode hem daha genis buffer/decay yeterli.
+IQL_EPISODES = 40_000
+IQL_BUFFER = 150_000           # transition, ajan basina
+IQL_BATCH = 128
+IQL_EPS_DECAY_STEPS = 40_000   # adim, ajan basina
+IQL_LEARN_START = 1_000
+IQL_LR = 1e-4
+IQL_TARGET_UPDATE = 2_000      # adim
+IQL_EVAL_EVERY = 4_000         # episode
+
 # ---------------------------------------------------------------- gozlem boyutu
 OBS_CHANNELS = 5               # own, other, goal, forbidden, own_visited
 N_SCALARS = 4                  # agent_id, phase, t/max, kalan_manhattan/max

@@ -17,27 +17,44 @@ from config import (DQN_BATCH, DQN_BUFFER, DQN_EPS_DECAY_STEPS, DQN_LR,
 
 
 class DQNAgent:
+    """Asama 3'te (tek ajan) dogrulugu kanitlanan makine, degistirilmeden.
+
+    Hiperparametreler constructor argumani: Asama 4'ten itibaren AYNI sinif
+    IQL'in iki bagimsiz ajani icin de kullaniliyor, farkli buffer/lr/decay
+    degerleriyle (IQL_* vs DQN_*) — varsayilanlar Asama 3'un DQN_* setini
+    korur, mevcut davranis degismez.
+    """
+
     def __init__(self, obs_dim: int = OBS_DIM, n_actions: int = N_ACTIONS,
-                 seed: int = 0, device: str = "cpu"):
+                 seed: int = 0, device: str = "cpu",
+                 buffer_size: int = DQN_BUFFER, batch_size: int = DQN_BATCH,
+                 lr: float = DQN_LR, eps_decay_steps: int = DQN_EPS_DECAY_STEPS,
+                 learn_start: int = DQN_LEARN_START,
+                 target_update: int = DQN_TARGET_UPDATE):
         self.device = torch.device(device)
         self.n_actions = n_actions
         torch.manual_seed(seed)
         self.rng = np.random.default_rng(seed)
+
+        self.batch_size = batch_size
+        self.eps_decay_steps = eps_decay_steps
+        self.learn_start = learn_start
+        self.target_update = target_update
 
         self.online = MLP(obs_dim, n_actions).to(self.device)
         self.target = MLP(obs_dim, n_actions).to(self.device)
         self.target.load_state_dict(self.online.state_dict())
         self.target.eval()
 
-        self.opt = torch.optim.Adam(self.online.parameters(), lr=DQN_LR)
-        self.buffer = ReplayBuffer(DQN_BUFFER, obs_dim, n_actions, self.rng)
+        self.opt = torch.optim.Adam(self.online.parameters(), lr=lr)
+        self.buffer = ReplayBuffer(buffer_size, obs_dim, n_actions, self.rng)
         self.steps = 0
 
     # ------------------------------------------------------------- politika
 
     @property
     def eps(self) -> float:
-        frac = min(1.0, self.steps / DQN_EPS_DECAY_STEPS)
+        frac = min(1.0, self.steps / self.eps_decay_steps)
         return EPS_START + frac * (EPS_END - EPS_START)
 
     def act(self, obs: np.ndarray, mask: np.ndarray, eps: float | None = None) -> int:
@@ -61,10 +78,10 @@ class DQNAgent:
         self.steps += 1
 
     def learn(self) -> float | None:
-        if len(self.buffer) < DQN_LEARN_START:
+        if len(self.buffer) < self.learn_start:
             return None
 
-        obs, action, reward, next_obs, done, next_mask = self.buffer.sample(DQN_BATCH)
+        obs, action, reward, next_obs, done, next_mask = self.buffer.sample(self.batch_size)
         t = lambda x, dt=torch.float32: torch.as_tensor(x, dtype=dt, device=self.device)
         obs, next_obs = t(obs), t(next_obs)
         action = t(action, torch.int64)
@@ -87,7 +104,7 @@ class DQNAgent:
         nn.utils.clip_grad_norm_(self.online.parameters(), GRAD_CLIP)
         self.opt.step()
 
-        if self.steps % DQN_TARGET_UPDATE == 0:
+        if self.steps % self.target_update == 0:
             self.target.load_state_dict(self.online.state_dict())
         return float(loss.item())
 

@@ -106,13 +106,16 @@ class MARLGridEnv:
     def _in_bounds(self, c: Cell) -> bool:
         return 0 <= c[0] < self.n and 0 <= c[1] < self.n
 
-    def action_mask(self, agent: int) -> np.ndarray:
-        """Gecerli aksiyonlar. Pasif ajanda SADECE NOOP, aktif ajanda NOOP kapali."""
-        mask = np.zeros(N_ACTIONS, dtype=np.float32)
-        if self.done or agent != self.active:
-            mask[NOOP] = 1.0
-            return mask
+    def physical_mask(self, agent: int) -> np.ndarray:
+        """Sadece FIZIKSEL gecerlilik: duvar + (A2 icin) yasak bolge.
 
+        done/active durumunu HIC dikkate almaz. Egitim dongusunde bir ajanin
+        kendi episode'u zaman asimiyla (timeout) bitince bootstrap icin
+        next_state'in GERCEK maskesi lazim — action_mask() o anda sadece
+        NOOP dondurur (asagida), bu da bootstrap'i bozar (bkz. Asama 3'teki
+        SingleAgentEnv ile ayni tuzak). Bu metod o acigi kapatir.
+        """
+        mask = np.zeros(N_ACTIONS, dtype=np.float32)
         forb = self.forbidden if agent == AGENT_2 else frozenset()
         cur = self.pos[agent]
         for a, (dr, dc) in enumerate(DIRS):
@@ -122,6 +125,14 @@ class MARLGridEnv:
         if mask.sum() == 0:          # tamamen kapali kalirsa (olmamali) NOOP ac
             mask[NOOP] = 1.0
         return mask
+
+    def action_mask(self, agent: int) -> np.ndarray:
+        """Politika secimi icin: pasif/bitmis ajanda SADECE NOOP."""
+        if self.done or agent != self.active:
+            mask = np.zeros(N_ACTIONS, dtype=np.float32)
+            mask[NOOP] = 1.0
+            return mask
+        return self.physical_mask(agent)
 
     # ------------------------------------------------------------ gozlem
 

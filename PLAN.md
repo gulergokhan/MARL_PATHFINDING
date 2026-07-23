@@ -401,21 +401,46 @@ kalıcı çözüldü.
 
 ---
 
-### 🔲 Aşama 4 — IQL (baseline) (~3 saat)
+### ✅ Aşama 4 — IQL (baseline) — TAMAM
 
-İki bağımsız DQN. Ortak ödül **yok** — her ajan sadece kendi step cost'unu ve
-kendi hedef bonusunu alır. Gölge NOOP da yok, her ajan kendi fazını oynar.
+İki bağımsız DQN. Ortak ödül **yok** — her ajan sadece `info["r_ind"]`'i alır
+(step-cost + kendi hedef bonusu; kilitleme/takım/optimallik cezaları r_team'e
+ait, r_ind'e hiç karışmıyor — bu ayrım grid_env.py'de zaten vardı, IQL'in
+tanımını otomatik sağladı). Gölge NOOP yok: her ajan SADECE kendi aktif
+olduğu adımlarda push()/learn() görür (`env/two_agent.py:play_episode`).
 
-- [ ] A2, yasak bölge maskesini gözleminden okuyup kaçınıyor
-- [ ] **Kabul:** A1 ve A2'nin kendi optimality gap'leri ~0 (DQN'ler sağlam),
-      **ama A2'nin zarar görme oranı ~%13.3'te çakılı kalıyor, hiç düşmüyor.**
+- [x] A2, yasak bölge maskesini (`physical_mask`) gözleminden okuyup kaçınıyor
+- [x] **Kabul GEÇTİ (TAM 14.400 konfig, 40.000 episode, 836s):**
 
-> Bu bir bug değil, **beklenen ve istenen sonuç.** Sıralı modda A1, Faz A
-> boyunca A2'nin akıbetine dair hiçbir ödül sinyali almaz — bu bilgi IQL'in
-> ödül yapısında fiziksel olarak **yoktur**. A1 kendi yolunu mükemmel öğrenir
-> ve yine random-shortest baseline'ıyla aynı zararı verir. Bu, "VDN neden
-> gerekli" sorusunun deneysel cevabı; raporun en güçlü grafiği bu olacak.
-> Zarar oranı IQL'de düşüyorsa ödüllere yanlışlıkla takım terimi sızmıştır.
+| Metrik | IQL sonucu | Random-shortest baseline | Yorum |
+|---|---:|---:|---|
+| A1 optimal değil (gap1≠0) | **0/14.400** | — | A1 mükemmel |
+| A2 **own_gap2** (gerçekleşen yasak bölgeye göre) | ortalama **+0.027**, %98.8'i tam optimal | — | **A2'nin DQN'i de sağlam** |
+| A2 ORACLE-gap (A1 en iyi seçseydi) | +0.287 | — | A2'nin hatası değil (aşağıda) |
+| Kilitleme oranı | **%0.84** | %0.82 | neredeyse özdeş |
+| **Zarar oranı (genel)** | **%12.91** | %13.28 | 🔑 baseline'da çakılı |
+| **Zarar oranı (zor alt-küme)** | **%42.71** | ~%45.5 (hesaplanan) | 🔑 aynı seviyede |
+
+**İki DQN de ayrı ayrı kusursuz, ama takım performansı hiç iyileşmiyor.**
+`own_gap2` ile `ORACLE-gap` arasındaki fark (0.027 vs 0.287) tam olarak
+beklenen ayrımı doğruluyor: A2 kendi payına düşen (gerçekleşmiş) yasak
+bölgeye göre neredeyse her zaman optimal — ORACLE-gap'in pozitif çıkması
+A2'nin hatası değil, **A1'in "hangi optimal yolu seçtiği önemsiz" diye
+öğrenmiş olmasının doğal sonucu.**
+
+Eğitim eğrisi ilginç bir örüntü gösterdi (`runs/iql_train_log.csv`): ep4000'de
+zarar(zor) %23 iken ep16000'e kadar %43-44'e **çıkıp** orada düzlendi. Bu bir
+kötüleşme değil — rastgele politikadan (epsilon yüksek) gerçek durağan
+değerine (baseline seviyesi) **yakınsama.**
+
+> Bu bir bug değil, **beklenen ve istenen sonuç, deneyle doğrulandı.** Sıralı
+> modda A1, Faz A boyunca A2'nin akıbetine dair hiçbir ödül sinyali almaz —
+> bu bilgi IQL'in ödül yapısında fiziksel olarak **yoktur**. A1 kendi yolunu
+> mükemmel öğrenir (gap1=0) ve A2 de kendi payına düşeni mükemmel öğrenir
+> (own_gap2≈0) — ama A1'in optimal 70 yol arasından **hangisini** seçtiği
+> hiç önemli değilmiş gibi davranması yüzünden takım zararı random-shortest
+> ile aynı seviyede kalıyor. Bu, "VDN neden gerekli" sorusunun ölçülmüş
+> deneysel cevabı.
 
 ---
 

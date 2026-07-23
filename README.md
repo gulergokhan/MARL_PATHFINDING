@@ -44,7 +44,7 @@ Testler:
 | 1 Ortam `env/grid_env.py` | ✅ |
 | 2 BFS oracle `baselines/` | ✅ |
 | 3 Tek ajan DQN | ✅ (600/600 optimal, gap 0.0) |
-| 4 IQL baseline | 🔲 |
+| 4 IQL baseline | ✅ (zarar %12.9, baseline-seviyesinde çakılı — bkz. altta) |
 | 5 VDN | 🔲 |
 | 6 Curriculum | 🔲 |
 | 7 QMIX | 🔲 |
@@ -63,6 +63,27 @@ aynı. ~200 saniye, 122k adım. Checkpoint: `runs/ckpt/dqn.pt`.
 
 Yol boyunca bir Q-value divergence bulunup düzeltildi (target update 500→2000
 adım, ayrı bir DQN LR'i 1e-4'e düşürüldü) — detay PLAN.md §Aşama 3.
+
+## IQL baseline (Aşama 4)
+
+```bash
+.venv\Scripts\python.exe train.py --algo iql --episodes 40000
+```
+
+İki bağımsız DQN, ortak ödül yok. TAM 14.400 konfigde deterministik greedy:
+
+| Metrik | IQL | Random-shortest baseline |
+|---|---:|---:|
+| A1 optimal değil | 0/14.400 | — |
+| A2 own_gap2 (gerçek yasak bölgeye göre) | ort. +0.027, %98.8 optimal | — |
+| Kilitleme | %0.84 | %0.82 |
+| **Zarar oranı (genel)** | **%12.91** | %13.28 |
+| **Zarar oranı (zor alt-küme)** | **%42.71** | ~%45.5 |
+
+İki DQN de ayrı ayrı kusursuz ama **takım performansı hiç iyileşmiyor** —
+A1'e A2'nin akıbetine dair hiçbir sinyal ödül fonksiyonunda yok, bu yüzden
+zarar oranı random-shortest baseline'ıyla aynı seviyede kalıyor. "VDN neden
+gerekli" sorusunun ölçülmüş cevabı — detay PLAN.md §Aşama 4.
 
 ## Ölçülmüş temel sayılar
 
