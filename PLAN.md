@@ -372,16 +372,32 @@ Projenin doğruluk zemini. Tarama 0.7 saniyede bitiyor.
 
 ---
 
-### 🔲 Aşama 3 — Tek ajan DQN (`agents/dqn.py`) (~4 saat)
+### ✅ Aşama 3 — Tek ajan DQN (`agents/dqn.py`) — TAMAM
 
-MARL'a geçmeden önce **DQN'inin doğru olduğunu kanıtla.** Buradaki bir bug'ı
-VDN içinde aramak günler yer.
+Sadece Ajan 1: random `s1`, random `g`, yasak bölge yok. `env/single_agent.py`
+sarmalayıcısı MARLGridEnv'in Faz A'sını tek başına oynatır — gözlem borusu
+(129 boyut) Aşama 4-5'e **birebir** taşınacak.
 
-Sadece Ajan 1: random `s1`, random `g`, yasak bölge yok.
+- [x] Replay buffer (100k transition), target network, Double DQN, ε-greedy
+- [x] **Kabul GEÇTİ (bağımsız doğrulandı):** 600 (start, goal) çiftinin
+      **TAMAMINDA** (örneklem değil, `d(s1,g)` uzayının tamamı) deterministik
+      greedy (ε=0) → **600/600 optimal, ortalama gap = 0.0000.**
 
-- [ ] Replay buffer, target network, Double DQN, ε-greedy
-- [ ] **Kabul:** 100 random konfigde ortalama yol uzunluğu = `manhattan(s1,g)`
-      (optimality gap **0.0**). Gap 0 değilse dur ve düzelt.
+**Yol boyunca bir Q-value divergence bulundu ve düzeltildi** — projenin ilk
+gerçek "hata teşhis et, kanıtla, düzelt" vakası:
+
+| Belirti | Kök neden | Kanıt | Düzeltme |
+|---|---|---|---|
+| ep16000'de %80.2 optimale ulaşıp ep24000'de **%0.2'ye çökme**, loss 0.008→9.0 (1000 episode'da ~10× büyüme) | Target ağı çok sık güncelleniyordu (500 adım) + LR yüksekti (5e-4) → moving-target pozitif geri besleme, Double DQN'i bile aşan bir Q-şişmesi | Loss'un üstel büyüme paterni klasik divergence imzası; LR/target-update'i düşürünce aynı seed'de aynı yerde tekrar etmedi | `DQN_TARGET_UPDATE` 500→2000, ayrı `DQN_LR=1e-4` (genel `LR`'den bağımsız) |
+| Timeout'ta episode'un "gerçek terminal" gibi `done=True` yazılması | Time-limit bootstrapping: 15. adımda hedefe uzaksan değeri 0 sayıyordu, halbuki gerçek değer ~0.7 — hata tam ajanın kaybolduğu durumlara enjekte oluyordu | — | `info["truncated"]` ayrımı: gerçek terminalde `done=True`, timeout'ta buffer'a `done=False` yazılıp bootstrap'e devam edildi |
+
+Ayrıca: Windows'ta stdout bir dosyaya/boruya yönlendirilince (`>`, `\|`)
+konsol değil `cp1252` kullanılıyor ve Türkçe karakterlerde `UnicodeEncodeError`
+veriyordu — `train.py` başında `sys.stdout.reconfigure(encoding="utf-8")` ile
+kalıcı çözüldü.
+
+Öğrenme eğrisi (`runs/dqn_train_log.csv`): ep2000 %82.2 optimal → ep8000 %99.7
+→ **ep12000'den itibaren %100.0, gap 0.0, 122.575 adımda, ~200 saniyede.**
 
 ---
 

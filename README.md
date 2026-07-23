@@ -43,13 +43,26 @@ Testler:
 | 0 Kurulum | ✅ |
 | 1 Ortam `env/grid_env.py` | ✅ |
 | 2 BFS oracle `baselines/` | ✅ |
-| 3 Tek ajan DQN | 🔲 |
+| 3 Tek ajan DQN | ✅ (600/600 optimal, gap 0.0) |
 | 4 IQL baseline | 🔲 |
 | 5 VDN | 🔲 |
 | 6 Curriculum | 🔲 |
 | 7 QMIX | 🔲 |
 | 8 Değerlendirme | 🔲 |
 | 9 Görselleştirme | 🔲 |
+
+## Tek ajan DQN (Aşama 3)
+
+```bash
+.venv\Scripts\python.exe train.py --algo dqn --episodes 30000
+```
+
+600 (start, goal) çiftinin **tamamında** (örneklem değil) deterministik
+greedy: **600/600 hedefe ulaşıyor, ortalama gap 0.0000** — BFS ile birebir
+aynı. ~200 saniye, 122k adım. Checkpoint: `runs/ckpt/dqn.pt`.
+
+Yol boyunca bir Q-value divergence bulunup düzeltildi (target update 500→2000
+adım, ayrı bir DQN LR'i 1e-4'e düşürüldü) — detay PLAN.md §Aşama 3.
 
 ## Ölçülmüş temel sayılar
 

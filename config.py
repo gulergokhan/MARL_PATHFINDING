@@ -39,17 +39,32 @@ R_TIMEOUT = -3.0      # herhangi bir fazda max_steps asildi
 # -1.0 ceza, +3.0'lik takim bonusuna karsi anlamli bir agirlik.
 R_OPT_GAP = -0.50
 
-# ---------------------------------------------------------------- egitim
+# ---------------------------------------------------------------- egitim (ortak)
 SEED = 0
 GAMMA = 0.99
 LR = 5e-4
+GRAD_CLIP = 10.0
+HIDDEN = 128
+
+# ---------------------------------------------------------------- MARL (Asama 4+)
 EPS_START, EPS_END, EPS_DECAY_STEPS = 1.0, 0.05, 50_000
 BUFFER_EPISODES = 5_000
 BATCH_EPISODES = 32
 TARGET_UPDATE_EVERY = 200      # episode
-GRAD_CLIP = 10.0
 TOTAL_EPISODES = 100_000
-HIDDEN = 128
+
+# ---------------------------------------------------------------- DQN (Asama 3)
+# Tek ajan, yasak bolge yok. Amac: MARL'a gecmeden once DQN makinesinin
+# dogrulugunu kanitlamak. Episode'lar cok kisa (ortalama ~3.3 adim), o yuzden
+# epsilon ADIM sayisina gore soner, episode sayisina gore degil.
+DQN_EPISODES = 30_000
+DQN_BUFFER = 100_000           # transition
+DQN_BATCH = 128                # transition
+DQN_EPS_DECAY_STEPS = 30_000   # adim
+DQN_LEARN_START = 1_000        # bu kadar transition birikmeden ogrenme
+DQN_LR = 1e-4                  # genel LR'den (5e-4) daha dusuk: Q-divergence onlemi
+DQN_TARGET_UPDATE = 2_000       # adim (500 -> 2000: moving-target/divergence onlemi)
+DQN_EVAL_EVERY = 2_000         # episode
 
 # Curriculum (PLAN §Asama 6): zor konfig orani 0.2 -> 0.8
 P_HARD_START, P_HARD_END, P_HARD_CAP = 0.20, 0.80, 0.80
